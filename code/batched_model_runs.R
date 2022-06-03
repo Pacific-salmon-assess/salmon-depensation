@@ -2,14 +2,27 @@
 library(here);library(dplyr)
 stock_dat<- read.csv(here('data','salmon_productivity_compilation_jun2022.csv'))
 stock_info<- read.csv(here('data','all_stocks_info_jun2022.csv'))
-library(cmdstanr);library(loo);library(dlm)
+library(rstan);library(loo);library(dlm)
 
 source(here('code','functions.R'))
-source(here('code','dlm-wrapper.R'))
 
-sock_info<- subset(sock_info, stock.id %in% sock_dat$stock.id)
-weights=data.frame(w1=NA,w2=NA,w2gp=NA,w3=NA,w3gp=NA,w4=NA,w4gp=NA)
-sock_info<- cbind(sock_info,weights)
+##steps:
+#1 - decide on rstan or cmdstanr for models
+#2 set up data/inputs
+#3 determine what we need to keep (full model output?)
+#4 crank through the stocks
+#5 - somehow make sense of the results from 246 stocks :D
+
+stock1<- subset(stock_dat,stock.id==unique(stock.id)[1])
+
+bh=here('code','Perala depensation stan models','bh_uniform_sigma2_model.stan')
+sbh=here('code','Perala depensation stan models','sbh_uniform_sigma2_model.stan')
+rick=here('code','Perala depensation stan models','r_uniform_sigma2_model.stan')
+sl=here('code','Perala depensation stan models','r_uniform_sigma2_model.stan')
+
+#
+
+
 ####Stan models####
 set_cmdstan_path()
 

@@ -21,6 +21,8 @@ rick=here('code','Perala depensation stan models','r_uniform_sigma2_model.stan')
 sl=here('code','Perala depensation stan models','r_uniform_sigma2_model.stan')
 
 #
+bh_test=rstan::stan(model_code = bh, data=list(),
+                    pars=c(), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
 
 
 ####Stan models####

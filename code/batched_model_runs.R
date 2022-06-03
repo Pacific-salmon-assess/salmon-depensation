@@ -13,17 +13,78 @@ source(here('code','functions.R'))
 #4 crank through the stocks
 #5 - somehow make sense of the results from 246 stocks :D
 
-stock1<- subset(stock_dat,stock.id==unique(stock.id)[1])
-
-bh=here('code','Perala depensation stan models','bh_uniform_sigma2_model.stan')
-sbh=here('code','Perala depensation stan models','sbh_uniform_sigma2_model.stan')
-rick=here('code','Perala depensation stan models','r_uniform_sigma2_model.stan')
-sl=here('code','Perala depensation stan models','r_uniform_sigma2_model.stan')
+stock1<- subset(stock_dat,stock.id==unique(stock.id)[2])
 
 #
-bh_test=rstan::stan(model_code = bh, data=list(),
-                    pars=c(), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+bh_test=rstan::stan(file = here('code','Perala depensation stan models','bh_uniform_sigma2_model.stan'), 
+                                      data=list(R=stock1$recruits,
+                                               S=stock1$spawners,
+                                               T=nrow(stock1),
+                                               q=0.5,
+                                               RinfLow=1,
+                                               RinfUp=max(stock1$recruits)*3,
+                                               SqLow=1,
+                                               SqUp=max(stock1$spawners)*3,
+                                               sigmaLow=0,
+                                               sigmaUp=3),
+                    pars=c('Rinf','Sq','sigma2','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
 
+sbh_test=rstan::stan(file = here('code','Perala depensation stan models','sbh_uniform_sigma2_model.stan'), 
+                    data=list(R=stock1$recruits,
+                              S=stock1$spawners,
+                              T=nrow(stock1),
+                              q=0.5,
+                              RinfLow=1,
+                              RinfUp=max(stock1$recruits)*3,
+                              SqLow=1,
+                              SqUp=max(stock1$spawners)*3,
+                              sigmaLow=0,
+                              sigmaUp=3,
+                              cLow=0,
+                              cUp=5),
+                    pars=c('Rinf','Sq','sigma2','c','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+
+#own stan code
+bh_test2=rstan::stan(file = here('code','stan code','beverton_holt.stan'), 
+                    data=list(R=stock1$recruits,
+                              S=stock1$spawners,
+                              N=nrow(stock1),
+                              TT=as.numeric(stock1$broodyear)),
+                    pars=c('a','b','sigma_e','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+
+shep_test2=rstan::stan(file = here('code','stan code','shepherd_sr.stan'), 
+                     data=list(R=stock1$recruits,
+                               S=stock1$spawners,
+                               N=nrow(stock1),
+                               TT=as.numeric(stock1$broodyear)),
+                     pars=c('a','b','c','sigma_e','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+
+
+ricker_test=rstan::stan(file = here('code','Perala depensation stan models','r_uniform_sigma2_model.stan'), 
+                    data=list(R=stock1$recruits,
+                              S=stock1$spawners,
+                              T=nrow(stock1),
+                              kLow=1,
+                              kUp=max(stock1$recruits)*3,
+                              SkLow=1,
+                              SkUp=max(stock1$spawners)*3,
+                              sigmaLow=0,
+                              sigmaUp=3),
+                    pars=c('k','Sk','sigma2','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+
+sl_test=rstan::stan(file = here('code','Perala depensation stan models','sl_uniform_sigma2_model.stan'), 
+                        data=list(R=stock1$recruits,
+                                  S=stock1$spawners,
+                                  T=nrow(stock1),
+                                  kLow=1,
+                                  kUp=max(stock1$recruits)*3,
+                                  SkLow=1,
+                                  SkUp=max(stock1$spawners)*3,
+                                  sigmaLow=0,
+                                  sigmaUp=3,
+                                  cLow=0,
+                                  cUp=5),
+                        pars=c('k','Sk','sigma2','c','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
 
 ####Stan models####
 set_cmdstan_path()

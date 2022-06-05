@@ -1,0 +1,77 @@
+---
+title: "Simple depensatory models to all stocks"
+output: rmarkdown::github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Read in data 
+```{r, data}
+SR_data <- read.csv("data/salmon_productivity_compilation_jun2022.csv") %>%
+  select(-X, -stock.id) %>%
+  mutate(species_stock = paste(species, stock)) #to help with looping later
+  
+```
+
+## Fit Shepard models to all populaitons  
+Need to get rid of some populations that won't fit.  
+I think these aren't fitting because of high recruitment variability, which makes my simple init for the beta parm (i.e. `max(sub_stock$spawners)/1.5`) break the model.  
+```{r, dump pops}
+SR_data <- filter(SR_data, !(species_stock %in% c("Chum S CIn")), 
+                  !(species %in% c("Coho", "Chinook")))
+```
+
+Then we can run the model  
+```{r, shepard}
+#build likliehood function
+getNegLogLike <- function(parms){
+  alpha <- parms[1]
+  beta <- exp(parms[2])
+  delta <- parms[3]
+  sd <- exp(parms[4])
+  
+  predicted <- (alpha*SR_test$spawners^delta)/(1+(beta*SR_test$spawners^delta))
+  NegLogLike <- -sum(log(dnorm(SR_test$recruits, predicted, sd = sd)))
+  return(NegLogLike)
+}
+
+#declare parms all pops will share
+alpha <- 1
+delta <- 1
+
+shepard_results <- NULL #empty df to populate with results
+
+for(i in unique(SR_data$species_stock)){
+  sub_stock <- filter(SR_data, species_stock == i) %>%
+      na.omit()
+    
+    #declare stock specific parms for beta and sd
+    log_beta <- log(max(sub_stock$spawners)/1.5)
+    log_sd <- log(sd(sub_stock$spawners/1.5)) 
+    
+    parms <- c(alpha, log_beta, delta, log_sd)
+    
+    #fit it
+    fit1 <- optim(parms, getNegLogLike, method="Nelder-Mead", hessian=TRUE)
+    fit2 <- optim(fit1$par, getNegLogLike, method="Nelder-Mead", hessian=TRUE)
+    fit3 <- optim(fit2$par, getNegLogLike, method="Nelder-Mead", hessian=TRUE)
+    
+
+    shepard_results <- rbind(data.frame(i, unique(sub_stock$species), unique(sub_stock$stock),
+                                            fit3$par[1], exp(fit3$par[2]), fit3$par[3], 
+                                        exp(fit3$par[4])), 
+                                 shepard_results)
+}
+```
+
+And then clean up the table  
+```{r, shepard table clean}
+colnames(shepard_results) <- c("species_stock", "species", "stock", "alpha", "beta", "delta", "sd")
+
+shepard_results <- shepard_results %>% 
+  mutate_at(4:7,funs(round(., 2)))
+  
+
+```

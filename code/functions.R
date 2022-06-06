@@ -14,6 +14,48 @@ assignCol<- function(x,cols,breaks){
   sapply(x$broodyear,whichColour,cols=cols,breaks=breaks)
 }
 
+
+
+sl_fun=function(s,Sk,k,c){
+  R_pred=k*(s/Sk)^c*exp(c*(1-(s/Sk)))
+  return(R_pred)
+}
+
+sl_lims=function(params,s,n.iter){
+  R_pred=matrix(nrow=n.iter,ncol=length(s))
+  for(i in 1:n.iter){
+    R_pred[i,]=params$k[i]*(s/params$Sk[i])^params$c[i]*exp(params$c[i]*(1-(s/params$Sk[i])))
+  }
+  lower=apply(R_pred,2,quantile,probs=0.05)
+  upper=apply(R_pred,2,quantile,probs=0.95)
+  return(cbind(lower,upper))
+}
+
+#Plot saila lorde curve
+sr_plot=function(x,params,pdf=0,i){
+  if(pdf==1){
+    pdf(here('outputs','figures','best fit SR plots',paste(paste(i,x$stock[1],x$species[1],sep='-'),'.pdf',sep='')),width=8,height=6)
+  }
+  plot(x$recruits~x$spawners,bty='l',xlab='Spawners',ylab='Reruits',main=paste(unique(x$stock),unique(x$species),sep='-'),pch=21,bg='black')
+  k=median(params$k);Sk=median(params$Sk);c=median(params$c);s=seq(min(x$spawners),max(x$spawners),length.out=1000)
+  lines(seq(0,max(s))~seq(0,max(s)),lty=3)
+  R_pred=sl_fun(s=s,k=k,Sk=Sk,c=c)
+  R_pred_lims=sl_lims(params=params,s=s,n.iter=2400)
+  
+  lines(R_pred~s,lwd=2,col='navy')
+  s1<- c(s, rev(s))
+  y1<- c(R_pred_lims[,1], rev(R_pred_lims[,2]))
+  polygon(s1, y1, col = adjustcolor('dodgerblue4', alpha = 0.4), border=NA) # Add uncertainty polygon
+  c_tx=c(paste('c =',round(c,3)))
+  text(x=min(s)+(range(s)[2]-range(s)[1])*0.15,y=max(x$recruits)*1.05,labels=paste('c =',round(c,3),'[',round(quantile(params$c,0.05),3),'-',round(quantile(params$c,0.95),3),']'),xpd=T)
+  
+  if(pdf==1){
+    dev.off()
+  }
+}
+
+
+
 #Plot function - recruit per spawner & SR plot by time
 plot_SR=function(x,m,path){ #x = dataset, m = S-R model fit, path = desired output folder
   x_new<- seq(min(x$spawners),max(x$spawners))
@@ -941,19 +983,3 @@ plot_ppd=function(y,y_rep,samps){
   }
   
 }
-
-x=seq(0,50)
-fun=function(x,c){
-  R=100/(1+(50/x)^c)
-  return(R)
-}
-
-R_1=fun(x,c=1)
-plot(R_1)
-R_2=fun(x,c=0.1)
-points(R_2)
-R_3=fun(x,c=3)
-points(R_3)
-
-
-100/(1+(50/1)^0.1)

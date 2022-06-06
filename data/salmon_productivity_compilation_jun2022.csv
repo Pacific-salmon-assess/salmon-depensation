@@ -6005,21 +6005,21 @@
 28910,Unuk,Chinook,2002,8626,6988,161
 29011,Unuk,Chinook,2003,6054,5546,161
 29110,Unuk,Chinook,2004,6000,3963,161
-2982,Alsek/Klukshu,Chinook,1976,2005,1064,162
-2991,Alsek/Klukshu,Chinook,1977,2156,2698,162
-3002,Alsek/Klukshu,Chinook,1978,3303,2530,162
-3011,Alsek/Klukshu,Chinook,1979,1506,3104,162
-3022,Alsek/Klukshu,Chinook,1980,1433,2487,162
-3032,Alsek/Klukshu,Chinook,1981,3237,1963,162
-3043,Alsek/Klukshu,Chinook,1982,3450,1969,162
-3052,Alsek/Klukshu,Chinook,1983,2209,2237,162
-3063,Alsek/Klukshu,Chinook,1984,2005,1572,162
-3072,Alsek/Klukshu,Chinook,1985,3415,1283,162
-3082,Alsek/Klukshu,Chinook,1986,2376,2607,162
-3093,Alsek/Klukshu,Chinook,1987,1994,2491,162
-3104,Alsek/Klukshu,Chinook,1988,3301,1994,162
-3114,Alsek/Klukshu,Chinook,1989,2945,2202,162
-3122,Alsek/Klukshu,Chinook,1990,8320,1698,162
+2982,Alsek-Klukshu,Chinook,1976,2005,1064,162
+2991,Alsek-Klukshu,Chinook,1977,2156,2698,162
+3002,Alsek-Klukshu,Chinook,1978,3303,2530,162
+3011,Alsek-Klukshu,Chinook,1979,1506,3104,162
+3022,Alsek-Klukshu,Chinook,1980,1433,2487,162
+3032,Alsek-Klukshu,Chinook,1981,3237,1963,162
+3043,Alsek-Klukshu,Chinook,1982,3450,1969,162
+3052,Alsek-Klukshu,Chinook,1983,2209,2237,162
+3063,Alsek-Klukshu,Chinook,1984,2005,1572,162
+3072,Alsek-Klukshu,Chinook,1985,3415,1283,162
+3082,Alsek-Klukshu,Chinook,1986,2376,2607,162
+3093,Alsek-Klukshu,Chinook,1987,1994,2491,162
+3104,Alsek-Klukshu,Chinook,1988,3301,1994,162
+3114,Alsek-Klukshu,Chinook,1989,2945,2202,162
+3122,Alsek-Klukshu,Chinook,1990,8320,1698,162
 3142,Situk,Chinook,1977,1406,1732,163
 3153,Situk,Chinook,1978,1110,808,163
 3162,Situk,Chinook,1979,2755,1284,163
@@ -7280,55 +7280,55 @@
 7377,Valley Creek,Chinook,2006,199,61,208
 7378,Valley Creek,Chinook,2007,241,75,208
 7379,Valley Creek,Chinook,2008,243,161,208
-7396,Wallowa/Lostine Rivers,Chinook,1959,1613,657,209
-7397,Wallowa/Lostine Rivers,Chinook,1960,2891,606,209
-7398,Wallowa/Lostine Rivers,Chinook,1961,3740,281,209
-7399,Wallowa/Lostine Rivers,Chinook,1962,3725,338,209
-7400,Wallowa/Lostine Rivers,Chinook,1963,2952,1104,209
-7401,Wallowa/Lostine Rivers,Chinook,1964,2339,1585,209
-7402,Wallowa/Lostine Rivers,Chinook,1965,1692,956,209
-7403,Wallowa/Lostine Rivers,Chinook,1966,1386,1284,209
-7404,Wallowa/Lostine Rivers,Chinook,1967,2173,1106,209
-7405,Wallowa/Lostine Rivers,Chinook,1968,1888,1152,209
-7406,Wallowa/Lostine Rivers,Chinook,1969,2471,914,209
-7407,Wallowa/Lostine Rivers,Chinook,1970,1760,813,209
-7408,Wallowa/Lostine Rivers,Chinook,1971,454,797,209
-7409,Wallowa/Lostine Rivers,Chinook,1972,669,1169,209
-7410,Wallowa/Lostine Rivers,Chinook,1973,1367,1263,209
-7411,Wallowa/Lostine Rivers,Chinook,1974,209,947,209
-7412,Wallowa/Lostine Rivers,Chinook,1975,193,328,209
-7413,Wallowa/Lostine Rivers,Chinook,1976,142,664,209
-7414,Wallowa/Lostine Rivers,Chinook,1977,260,221,209
-7415,Wallowa/Lostine Rivers,Chinook,1978,666,1097,209
-7416,Wallowa/Lostine Rivers,Chinook,1979,247,157,209
-7417,Wallowa/Lostine Rivers,Chinook,1980,533,155,209
-7418,Wallowa/Lostine Rivers,Chinook,1981,697,76,209
-7419,Wallowa/Lostine Rivers,Chinook,1982,561,520,209
-7420,Wallowa/Lostine Rivers,Chinook,1983,1222,375,209
-7421,Wallowa/Lostine Rivers,Chinook,1984,406,492,209
-7422,Wallowa/Lostine Rivers,Chinook,1985,292,675,209
-7423,Wallowa/Lostine Rivers,Chinook,1986,271,419,209
-7424,Wallowa/Lostine Rivers,Chinook,1987,88,640,209
-7425,Wallowa/Lostine Rivers,Chinook,1988,577,975,209
-7426,Wallowa/Lostine Rivers,Chinook,1989,168,296,209
-7427,Wallowa/Lostine Rivers,Chinook,1990,41,95,209
-7428,Wallowa/Lostine Rivers,Chinook,1991,45,163,209
-7429,Wallowa/Lostine Rivers,Chinook,1992,102,196,209
-7430,Wallowa/Lostine Rivers,Chinook,1993,197,501,209
-7431,Wallowa/Lostine Rivers,Chinook,1994,184,67,209
-7432,Wallowa/Lostine Rivers,Chinook,1995,138,37,209
-7433,Wallowa/Lostine Rivers,Chinook,1996,279,96,209
-7434,Wallowa/Lostine Rivers,Chinook,1997,885,195,209
-7435,Wallowa/Lostine Rivers,Chinook,1998,1422,185,209
-7436,Wallowa/Lostine Rivers,Chinook,1999,526,95,209
-7437,Wallowa/Lostine Rivers,Chinook,2000,1028,231,209
-7438,Wallowa/Lostine Rivers,Chinook,2001,697,651,209
-7439,Wallowa/Lostine Rivers,Chinook,2002,729,861,209
-7440,Wallowa/Lostine Rivers,Chinook,2003,538,818,209
-7441,Wallowa/Lostine Rivers,Chinook,2004,1527,858,209
-7442,Wallowa/Lostine Rivers,Chinook,2005,1348,678,209
-7443,Wallowa/Lostine Rivers,Chinook,2006,4813,480,209
-7444,Wallowa/Lostine Rivers,Chinook,2007,2881,391,209
+7396,Wallowa-Lostine Rivers,Chinook,1959,1613,657,209
+7397,Wallowa-Lostine Rivers,Chinook,1960,2891,606,209
+7398,Wallowa-Lostine Rivers,Chinook,1961,3740,281,209
+7399,Wallowa-Lostine Rivers,Chinook,1962,3725,338,209
+7400,Wallowa-Lostine Rivers,Chinook,1963,2952,1104,209
+7401,Wallowa-Lostine Rivers,Chinook,1964,2339,1585,209
+7402,Wallowa-Lostine Rivers,Chinook,1965,1692,956,209
+7403,Wallowa-Lostine Rivers,Chinook,1966,1386,1284,209
+7404,Wallowa-Lostine Rivers,Chinook,1967,2173,1106,209
+7405,Wallowa-Lostine Rivers,Chinook,1968,1888,1152,209
+7406,Wallowa-Lostine Rivers,Chinook,1969,2471,914,209
+7407,Wallowa-Lostine Rivers,Chinook,1970,1760,813,209
+7408,Wallowa-Lostine Rivers,Chinook,1971,454,797,209
+7409,Wallowa-Lostine Rivers,Chinook,1972,669,1169,209
+7410,Wallowa-Lostine Rivers,Chinook,1973,1367,1263,209
+7411,Wallowa-Lostine Rivers,Chinook,1974,209,947,209
+7412,Wallowa-Lostine Rivers,Chinook,1975,193,328,209
+7413,Wallowa-Lostine Rivers,Chinook,1976,142,664,209
+7414,Wallowa-Lostine Rivers,Chinook,1977,260,221,209
+7415,Wallowa-Lostine Rivers,Chinook,1978,666,1097,209
+7416,Wallowa-Lostine Rivers,Chinook,1979,247,157,209
+7417,Wallowa-Lostine Rivers,Chinook,1980,533,155,209
+7418,Wallowa-Lostine Rivers,Chinook,1981,697,76,209
+7419,Wallowa-Lostine Rivers,Chinook,1982,561,520,209
+7420,Wallowa-Lostine Rivers,Chinook,1983,1222,375,209
+7421,Wallowa-Lostine Rivers,Chinook,1984,406,492,209
+7422,Wallowa-Lostine Rivers,Chinook,1985,292,675,209
+7423,Wallowa-Lostine Rivers,Chinook,1986,271,419,209
+7424,Wallowa-Lostine Rivers,Chinook,1987,88,640,209
+7425,Wallowa-Lostine Rivers,Chinook,1988,577,975,209
+7426,Wallowa-Lostine Rivers,Chinook,1989,168,296,209
+7427,Wallowa-Lostine Rivers,Chinook,1990,41,95,209
+7428,Wallowa-Lostine Rivers,Chinook,1991,45,163,209
+7429,Wallowa-Lostine Rivers,Chinook,1992,102,196,209
+7430,Wallowa-Lostine Rivers,Chinook,1993,197,501,209
+7431,Wallowa-Lostine Rivers,Chinook,1994,184,67,209
+7432,Wallowa-Lostine Rivers,Chinook,1995,138,37,209
+7433,Wallowa-Lostine Rivers,Chinook,1996,279,96,209
+7434,Wallowa-Lostine Rivers,Chinook,1997,885,195,209
+7435,Wallowa-Lostine Rivers,Chinook,1998,1422,185,209
+7436,Wallowa-Lostine Rivers,Chinook,1999,526,95,209
+7437,Wallowa-Lostine Rivers,Chinook,2000,1028,231,209
+7438,Wallowa-Lostine Rivers,Chinook,2001,697,651,209
+7439,Wallowa-Lostine Rivers,Chinook,2002,729,861,209
+7440,Wallowa-Lostine Rivers,Chinook,2003,538,818,209
+7441,Wallowa-Lostine Rivers,Chinook,2004,1527,858,209
+7442,Wallowa-Lostine Rivers,Chinook,2005,1348,678,209
+7443,Wallowa-Lostine Rivers,Chinook,2006,4813,480,209
+7444,Wallowa-Lostine Rivers,Chinook,2007,2881,391,209
 7465,Wenaha River,Chinook,1963,2721,1269,210
 7466,Wenaha River,Chinook,1964,1969,1586,210
 7467,Wenaha River,Chinook,1965,4467,759,210

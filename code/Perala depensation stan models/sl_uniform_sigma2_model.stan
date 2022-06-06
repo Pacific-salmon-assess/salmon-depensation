@@ -79,7 +79,7 @@ generated quantities
    vector[T] log_lik;
 
    for (t in 1:T) {
-      log_lik[t] = lognormal_log(R[t], mu[t], sigma);
+      log_lik[t] = lognormal_lpdf(R[t]| mu[t], sigma);
    }
 
 }

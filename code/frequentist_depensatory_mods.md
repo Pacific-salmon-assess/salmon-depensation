@@ -1,28 +1,41 @@
----
-title: "Simple depensatory models to all stocks"
-output: rmarkdown::github_document
----
+Simple depensatory models to all stocks
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+``` r
+library(tidyverse)
 ```
 
-```{r, load pkgs}
-library(tidyverse)
+    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
+
+    ## v ggplot2 3.3.6     v purrr   0.3.4
+    ## v tibble  3.1.7     v dplyr   1.0.7
+    ## v tidyr   1.2.0     v stringr 1.4.0
+    ## v readr   2.1.2     v forcats 0.5.1
+
+    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+    ## x dplyr::filter() masks stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
+
+``` r
 library(ggh4x)
 ```
 
-#### Read in data 
-```{r, data}
+#### Read in data
+
+``` r
 SR_data <- read.csv("C:/Users/GLASERD/Desktop/projects/2022_depensation/salmon-depensation/data/salmon_productivity_compilation_jun2022.csv") %>%
   select(-X, -stock.id) %>%
   mutate(species_stock = paste(species, stock)) #to help with looping later
 ```
 
-## Fit Shepard models to all populaitons  
-Need to get rid of some populations that won't fit.  
-I think these aren't fitting because of high recruitment variability, which makes my simple init for the beta parm (i.e. `max(sub_stock$spawners)/1.5`) break the model.  
-```{r, dump pops}
+## Fit Shepard models to all populaitons
+
+Need to get rid of some populations that won’t fit.  
+I think these aren’t fitting because of high recruitment variability,
+which makes my simple init for the beta parm
+(i.e. `max(sub_stock$spawners)/1.5`) break the model.
+
+``` r
 SR_data_filter <- filter(SR_data, !(species_stock %in% c("Chinook Andrew Creek", "Chinook Alsek/Klukshu",
                                                 "Chinook Alsek-Klukshu",
                                                 "Chinook East Fork South Fork Salmon River",
@@ -32,8 +45,9 @@ SR_data_filter <- filter(SR_data, !(species_stock %in% c("Chinook Andrew Creek",
          recruits = ifelse(spawners==0|recruits==0, recruits+1, recruits))
 ```
 
-Then we can run the model  
-```{r, shepard}
+Then we can run the model
+
+``` r
 #build likliehood function
 getNegLogLike <- function(parms){
   alpha <- parms[1]
@@ -75,16 +89,35 @@ for(i in unique(SR_data_filter$species_stock)){
 }
 ```
 
-And then clean up the table  
-```{r, shepard table clean}
+And then clean up the table
+
+``` r
 colnames(shepard_results) <- c("species_stock", "species", "stock", "alpha", "beta", "delta", "sd")
 
 shepard_results <- shepard_results %>% 
   mutate_at(4:7,funs(round(., 2)))
 ```
 
-Some of these `beta` parameters are tiny. They must have had a hard time fitting. Let's look at the data to try and get an idea of whats going on. We'll also include the pops that wouldn't fit that we filtered out earlier.    
-```{r, check bad stocks}
+    ## Warning: `funs()` was deprecated in dplyr 0.8.0.
+    ## Please use a list of either functions or lambdas: 
+    ## 
+    ##   # Simple named list: 
+    ##   list(mean = mean, median = median)
+    ## 
+    ##   # Auto named with `tibble::lst()`: 
+    ##   tibble::lst(mean, median)
+    ## 
+    ##   # Using lambdas
+    ##   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
+
+Some of these `beta` parameters are tiny. They must have had a hard time
+fitting. Let’s look at the data to try and get an idea of whats going
+on. We’ll also include the pops that wouldn’t fit that we filtered out
+earlier.
+
+``` r
 bad_stocks <- c(filter(shepard_results, beta<1) %>% pull(species_stock), 
                 "Chinook Andrew Creek", "Chinook Alsek/Klukshu",
                                                 "Chinook Alsek-Klukshu",
@@ -111,8 +144,12 @@ for(i in 1:pages){
 }
 ```
 
-then let's take a look at the delta estimates by species, for fits we trust  
-```{r, compare deltas}
+![](frequentist_depensatory_mods_files/figure-gfm/check%20bad%20stocks-1.png)<!-- -->![](frequentist_depensatory_mods_files/figure-gfm/check%20bad%20stocks-2.png)<!-- -->![](frequentist_depensatory_mods_files/figure-gfm/check%20bad%20stocks-3.png)<!-- -->![](frequentist_depensatory_mods_files/figure-gfm/check%20bad%20stocks-4.png)<!-- -->
+
+then let’s take a look at the delta estimates by species, for fits we
+trust
+
+``` r
 good_fits <- filter(shepard_results, !(species_stock %in% bad_stocks))
 
 ggplot(good_fits, aes(delta)) +
@@ -120,3 +157,7 @@ ggplot(good_fits, aes(delta)) +
   facet_wrap(~species) +
   labs(title = "Histogram of delta parameter estimates form a depensatory beverton-holt")
 ```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](frequentist_depensatory_mods_files/figure-gfm/compare%20deltas-1.png)<!-- -->

@@ -13,7 +13,7 @@ source(here('code','functions.R'))
 stock_d=distinct(stock_dat,stock.id,.keep_all = T)
 stock_name=paste(stock_d$stock,stock_d$species,sep='-')
 depensation_summary=data.frame(stock=stock_name,sp=stock_d$species,c_median=NA,c.l90=NA,c.u90=NA,c.l95=NA,c.u95=NA,Sk=NA,Sk.l90=NA,Sk.u90=NA)
-for(i in 208:length(stock_name)){
+for(i in 1:length(stock_name)){
   stock1<- subset(stock_dat,stock.id==unique(stock.id)[i])
   if(any(stock1$spawners==0)||any(stock1$recruits==0)){
     stock1$spawners=stock1$spawners+1
@@ -48,6 +48,8 @@ for(i in 208:length(stock_name)){
   sr_plot(params=params,x=stock1,pdf=1,i=i)
   
 }
+
+write.csv(depensation_summary,here('outputs','tables','depensation_parameter_overview.csv'))
 
 
 pdf(here('outputs','figures','c_parameter_summary_plot.pdf'),width=14,height=8.5)

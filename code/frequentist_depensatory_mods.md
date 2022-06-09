@@ -17,13 +17,16 @@ library(tidyverse)
     ## x dplyr::lag()    masks stats::lag()
 
 ``` r
-library(ggh4x)
+library(ggh4x) #for some nicer facetting
+library(here)
 ```
+
+    ## here() starts at C:/Users/GLASERD/Desktop/projects/2022_depensation/salmon-depensation
 
 #### Read in data
 
 ``` r
-SR_data <- read.csv("C:/Users/GLASERD/Desktop/projects/2022_depensation/salmon-depensation/data/salmon_productivity_compilation_jun2022.csv") %>%
+SR_data <- read.csv(here("data/salmon_productivity_compilation_jun2022.csv")) %>%
   select(-X, -stock.id) %>%
   mutate(species_stock = paste(species, stock)) #to help with looping later
 ```

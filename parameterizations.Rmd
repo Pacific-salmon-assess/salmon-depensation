@@ -6,6 +6,11 @@ output: rmarkdown::github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r, load pkgs}
+library(tidyverse)
+```
+
 ## Background  
 Here we explore various paramaterizations of stock recruit relationships (SRRs) that show evidence of depensation. There are many parameterizaitons for both Ricker and Beverton-Holt type SRRs but we will focus on some basics. Most of these derivations arise from a need for how to treat the depensatory parameter, with some having a goal of making the depensatory parameter "biologically relevant".    
 
@@ -31,21 +36,116 @@ $$ R_{t} = k(\frac{S_{t}}{S_{k}})^{C}e^{C (1-S_{t}/S_{k})} $$
 where $R_{t}$ and $S_{t}$ are vectors of recruits and spawners at time *t*, *k* is the maximum number of recruits produced when $S_{t} = S_{k}$ and $S_{k}$ is is the spawning stock at which the number of recruits is *k*. *c* is the depensatory parameter; *c* = 1 produces the classic Ricker, *c* > 1 shows depensatory dynamics, and *c* < 1 shows hypercompensaiton.  
 
 ## Simulation  
-We'll simulate some data to play with.  
+We'll simulate some data to play with. FEEL FREE to toggle the parameters (i.e. S, Sk, k, c, sigma), they will cascade through the robust code  
 
 ```{r, write fun}
 sal_lor <- function(S, Sk, k, c, sigma){
-  exp_rec = ((k*(S/Sk)^c)*exp(c*(1-S/Sk))+sigma)
+  exp_rec <- ((k*(S/Sk)^c)*exp(c*(1-S/Sk))+sigma)
   return(exp_rec)
 }
   
 S <- runif(100, 0, 1000)
-Sk <- 500
-k <- 100
+Sk <- 600
+k <- 200
 c <- 3
 sigma <- rnorm(length(S), 0, 10)
 
 exp_rec <- sal_lor(S, Sk, k, c, sigma)
 
 plot(S, exp_rec)
+
+sim_stock <- data.frame(stock = S, recruits = exp_rec)
 ```  
+
+## Fit simulated data  
+Can fit a ricker here the "old fashinoed way by making it linear.  
+
+```{r, ricker fit}
+rick_fit <- lm(log(recruits/stock)~stock, data = sim_stock)
+
+summary(rick_fit)$coefficients
+```
+
+now we can use optim to fit a non linear Quinn & Deriso model  
+```{r, QD fit}
+QDLogLike <- function(parms){
+  alpha <- parms[1]
+  beta <- parms[2]
+  delta <- parms[3]
+  gamma <- parms[4]
+  sd <- exp(parms[5])
+  
+  predicted <- alpha*sim_stock$stock*exp((beta*sim_stock$stock)-(delta*sim_stock$stock^gamma))
+  
+  NegLogLike <- -sum(log(dnorm(sim_stock$recruits, predicted, sd= sd)))
+  return(NegLogLike)
+}
+
+#declare start parms - guess based on previous fit 
+alpha <- exp(summary(rick_fit)$coefficients[1])
+beta <- -summary(rick_fit)$coefficients[2]
+delta <- 1
+gamma <- 1
+sd <- log(10)
+
+parms <- list(alpha, beta, delta, gamma, sd)
+
+QD_fit <- optim(parms, QDLogLike, method="Nelder-Mead", hessian=TRUE)
+
+QD_fit$par
+```
+
+Now we'll refit the Salia-Lorda  
+```{r, sal-lor fit}
+SLLogLike <- function(parms){
+  Sk <- parms[1]
+  k <- parms[2]
+  c <- parms[3]
+  sd <- exp(parms[4])
+  
+  predicted <- ((k*(sim_stock$stock/Sk)^c)*exp(c*(1-sim_stock$stock/Sk)))  
+  NegLogLike <- -sum(log(dnorm(sim_stock$recruits, predicted, sd= sd)))
+  return(NegLogLike)
+}
+#Sk <- 1000 #tester - this is finnecky! and changes results - must be hitting local minima
+parms <- list(Sk, k, c, sd) #can recycle from above
+
+SL_fit <- optim(parms, SLLogLike, method="Nelder-Mead", hessian=TRUE)
+cbind(c("SK", "k", "c", "sd"), SL_fit$par)
+```
+
+Now we'll gnerate model predictions from the parameter fits   
+```{r, plot it}
+r_alpha <- exp(summary(rick_fit)$coefficients[1])
+r_beta <- summary(rick_fit)$coefficients[2]
+
+rick_preds <- r_alpha*sim_stock$stock*exp(r_beta*sim_stock$stock)
+rick_preds <- data.frame(fit = rick_preds, S = S) %>%
+  arrange(S)
+
+QD_alpha <- QD_fit$par[1]
+QD_beta <- QD_fit$par[2]
+QD_delta <- QD_fit$par[3]
+QD_gamma <- QD_fit$par[4]
+
+QD_preds <- QD_alpha*sim_stock$stock*exp((QD_beta*sim_stock$stock)-(QD_delta*sim_stock$stock^QD_gamma))
+QD_preds <- data.frame(fit = QD_preds, S = S) %>%
+  arrange(S) 
+SL_Sk <- SL_fit$par[1]
+SL_k <- SL_fit$par[2]
+SL_c <- SL_fit$par[3]
+
+SL_preds <- ((SL_k*(sim_stock$stock/Sk)^c)*exp(c*(1-sim_stock$stock/Sk)))  
+
+SL_preds <- data.frame(fit = SL_preds, S = S) %>%
+  arrange(S)
+```
+
+Then plot it
+```{r, plot fits}
+plot(S, exp_rec)
+lines(fit~S, data = rick_preds, col = "blue")
+lines(fit~S, data = SL_preds, col = "green")
+lines(fit~S, data = QD_preds, col = "red") #Something's messed up with the QD model!
+
+```

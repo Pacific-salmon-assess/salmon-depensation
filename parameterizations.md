@@ -5,17 +5,6 @@ Various stock recruit relationships for depensatory dynamics
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
-
-    ## ✔ ggplot2 3.3.6     ✔ purrr   0.3.4
-    ## ✔ tibble  3.1.7     ✔ dplyr   1.0.9
-    ## ✔ tidyr   1.2.0     ✔ stringr 1.4.0
-    ## ✔ readr   2.1.2     ✔ forcats 0.5.1
-
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-
 ## Background
 
 Here we explore various paramaterizations of stock recruit relationships
@@ -27,11 +16,13 @@ making the depensatory parameter “biologically relevant”.
 
 ### Ricker based SRRs
 
-There are 3 types we will explore here. - original
-[Ricker](https://cdnsciencepub.com/doi/10.1139/f54-039) from 1954  
+There are 3 types we will explore here.  
+- original [Ricker](https://cdnsciencepub.com/doi/10.1139/f54-039) from
+1954  
 - depensatory Ricker ([Quinn & Deriso,
 1999](https://books.google.ca/books/about/Quantitative_Fish_Dynamics.html?id=5FVBj8jnh6sC&redir_esc=y),
-p. 99) - Saila-Lorda (as described in [Perala & Kuparinen,
+p. 99)  
+- Saila-Lorda (as described in [Perala & Kuparinen,
 2017](http://dx.doi.org/10.1098/rspb.2017.1284))
 
 To understand these models we’ll describe their structure, simulate data
@@ -89,7 +80,7 @@ sal_lor <- function(S, Sk, k, c, sigma){
   return(exp_rec)
 }
   
-S <- runif(100, 0, 1000)
+S <- runif(100, 10, 1000)
 Sk <- 600
 k <- 200
 c <- 3
@@ -108,7 +99,7 @@ sim_stock <- data.frame(stock = S, recruits = exp_rec)
 
 ## Fit simulated data
 
-Can fit a ricker here the “old fashinoed way by making it linear.
+Can fit a Ricker here the “old fashioned” way by making it linear.
 
 ``` r
 rick_fit <- lm(log(recruits/stock)~stock, data = sim_stock)
@@ -120,9 +111,9 @@ rick_fit <- lm(log(recruits/stock)~stock, data = sim_stock)
 summary(rick_fit)$coefficients
 ```
 
-    ##                 Estimate   Std. Error   t value     Pr(>|t|)
-    ## (Intercept) -0.929777091 0.1149746440 -8.086801 1.975182e-12
-    ## stock       -0.000736401 0.0001969179 -3.739636 3.150275e-04
+    ##                  Estimate   Std. Error   t value     Pr(>|t|)
+    ## (Intercept) -1.0819749957 0.0782836899 -13.82121 2.843087e-24
+    ## stock       -0.0004875064 0.0001435155  -3.39689 1.004382e-03
 
 now we can use optim to fit a non linear Quinn & Deriso model
 
@@ -154,7 +145,7 @@ QD_fit <- optim(parms, QDLogLike, method="Nelder-Mead", hessian=TRUE)
 QD_fit$par
 ```
 
-    ## [1]  0.8406881 -0.3514120 -0.7352116  0.2919089  4.9556950
+    ## [1]  0.3156333 -1.6247348  0.3445702  1.2789218  4.9118483
 
 Now we’ll refit the Salia-Lorda
 
@@ -177,12 +168,12 @@ cbind(c("SK", "k", "c", "sd"), SL_fit$par)
 ```
 
     ##      [,1] [,2]              
-    ## [1,] "SK" "596.168642310362"
-    ## [2,] "k"  "198.965534625435"
-    ## [3,] "c"  "2.82656189534481"
-    ## [4,] "sd" "2.24743231071727"
+    ## [1,] "SK" "593.445302506936"
+    ## [2,] "k"  "200.330073804739"
+    ## [3,] "c"  "2.95127637263951"
+    ## [4,] "sd" "2.31327913182608"
 
-Now we’ll gnerate model predictions from the parameter fits
+Now we’ll generate model predictions from the parameter fits
 
 ``` r
 r_alpha <- exp(summary(rick_fit)$coefficients[1])
@@ -220,3 +211,23 @@ lines(fit~S, data = QD_preds, col = "red") #Something's messed up with the QD mo
 ```
 
 ![](parameterizations_files/figure-gfm/plot%20fits-1.png)<!-- -->
+
+## To-do
+
+-   Clip the negative recruits out of the simulation!  
+-   Fix the 4 parameter Ricker from Quinn & Deriso so it actually
+    fits!  
+-   Play around with different solvers (e.g. `nlme()`?) because
+    `optim()` is very sensitive to starting parameters in these models
+
+we could add variations of the Beverton-Holt, which are generally easier
+to fit. These could include:  
+- classic Beverton-Holt without depensation  
+- Myers’ Beverton-Holt from the ’95
+[paper](https://www.science.org/doi/10.1126/science.269.5227.1106) in
+*Science*  
+- The Beverton-Holt fit in the Perala et al
+[paper](https://royalsocietypublishing.org/doi/10.1098/rsbl.2021.0439)  
+- [Lierman &
+Hilborn’s](https://cdnsciencepub.com/doi/abs/10.1139/f97-105) stepwise
+way of fitting a depensatory Beverton-Holt with meaningful parameters

@@ -7,7 +7,7 @@ output: rmarkdown::github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, load pkgs}
+```{r, load pkgs, message = FALSE}
 library(tidyverse)
 ```
 
@@ -15,10 +15,10 @@ library(tidyverse)
 Here we explore various paramaterizations of stock recruit relationships (SRRs) that show evidence of depensation. There are many parameterizaitons for both Ricker and Beverton-Holt type SRRs but we will focus on some basics. Most of these derivations arise from a need for how to treat the depensatory parameter, with some having a goal of making the depensatory parameter "biologically relevant".    
 
 ### Ricker based SRRs  
-There are 3 types we will explore here. 
-- original [Ricker](https://cdnsciencepub.com/doi/10.1139/f54-039) from 1954  
-- depensatory Ricker ([Quinn & Deriso, 1999](https://books.google.ca/books/about/Quantitative_Fish_Dynamics.html?id=5FVBj8jnh6sC&redir_esc=y), p. 99)
-- Saila-Lorda (as described in [Perala & Kuparinen, 2017](http://dx.doi.org/10.1098/rspb.2017.1284))
+There are 3 types we will explore here.  
+- original [Ricker](https://cdnsciencepub.com/doi/10.1139/f54-039) from 1954   
+- depensatory Ricker ([Quinn & Deriso, 1999](https://books.google.ca/books/about/Quantitative_Fish_Dynamics.html?id=5FVBj8jnh6sC&redir_esc=y), p. 99)  
+- Saila-Lorda (as described in [Perala & Kuparinen, 2017](http://dx.doi.org/10.1098/rspb.2017.1284))  
 
 To understand these models we'll describe their structure, simulate data based on the Saila-Lorda then fit each SRR to the simulated data.  
 
@@ -44,7 +44,7 @@ sal_lor <- function(S, Sk, k, c, sigma){
   return(exp_rec)
 }
   
-S <- runif(100, 0, 1000)
+S <- runif(100, 10, 1000)
 Sk <- 600
 k <- 200
 c <- 3
@@ -58,7 +58,7 @@ sim_stock <- data.frame(stock = S, recruits = exp_rec)
 ```  
 
 ## Fit simulated data  
-Can fit a ricker here the "old fashinoed way by making it linear.  
+Can fit a Ricker here the "old fashioned" way by making it linear.  
 
 ```{r, ricker fit}
 rick_fit <- lm(log(recruits/stock)~stock, data = sim_stock)
@@ -114,7 +114,7 @@ SL_fit <- optim(parms, SLLogLike, method="Nelder-Mead", hessian=TRUE)
 cbind(c("SK", "k", "c", "sd"), SL_fit$par)
 ```
 
-Now we'll gnerate model predictions from the parameter fits   
+Now we'll generate model predictions from the parameter fits   
 ```{r, plot it}
 r_alpha <- exp(summary(rick_fit)$coefficients[1])
 r_beta <- summary(rick_fit)$coefficients[2]
@@ -147,5 +147,15 @@ plot(S, exp_rec)
 lines(fit~S, data = rick_preds, col = "blue")
 lines(fit~S, data = SL_preds, col = "green")
 lines(fit~S, data = QD_preds, col = "red") #Something's messed up with the QD model!
-
 ```
+
+## To-do  
+- Clip the negative recruits out of the simulation!  
+- Fix the 4 parameter Ricker from Quinn & Deriso so it actually fits!  
+- Play around with different solvers (e.g. `nlme()`?) because `optim()` is very sensitive to starting parameters in these models  
+
+we could add variations of the Beverton-Holt, which are generally easier to fit. These could include:  
+- classic Beverton-Holt without depensation  
+- Myers' Beverton-Holt from the '95 [paper](https://www.science.org/doi/10.1126/science.269.5227.1106) in *Science*  
+- The Beverton-Holt fit in the Perala et al [paper](https://royalsocietypublishing.org/doi/10.1098/rsbl.2021.0439)  
+- [Lierman & Hilborn's](https://cdnsciencepub.com/doi/abs/10.1139/f97-105) stepwise way of fitting a depensatory Beverton-Holt with meaningful parameters  

@@ -1,30 +1,28 @@
 ---
-title: "Various stock recruit relationships for depensatory dynamics"
+title: "Various spawner recruit relationships for depensatory dynamics"
 output: rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r, load pkgs, message = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
+library(kableExtra)
 ```
 
-## Background  
-Here we explore various paramaterizations of stock recruit relationships (SRRs) that show evidence of depensation. There are many parameterizaitons for both Ricker and Beverton-Holt type SRRs but we will focus on some basics. Most of these derivations arise from a need for how to treat the depensatory parameter, with some having a goal of making the depensatory parameter "biologically relevant".    
+# Background  
+Here we explore various parameterizations of stock recruit relationships (SRRs) that show evidence of depensation. There are many parameterizaitons for both Ricker and Beverton-Holt type spawner recruit relationships (SRRs) but we will focus on some basics. Most of these derivations arise from a need for how to treat the depensatory parameter, with some having a goal of making the depensatory parameter "biologically relevant".    
 
-### Ricker based SRRs  
+## Ricker based SRRs  
 There are 3 types we will explore here.  
 - original [Ricker](https://cdnsciencepub.com/doi/10.1139/f54-039) from 1954   
 - depensatory Ricker ([Quinn & Deriso, 1999](https://books.google.ca/books/about/Quantitative_Fish_Dynamics.html?id=5FVBj8jnh6sC&redir_esc=y), p. 99)  
-- Saila-Lorda (as described in [Perala & Kuparinen, 2017](http://dx.doi.org/10.1098/rspb.2017.1284))  
+- Saila-Lorda (as described in [Per&auml;l&auml; & Kuparinen, 2017](http://dx.doi.org/10.1098/rspb.2017.1284))  
 
 To understand these models we'll describe their structure, simulate data based on the Saila-Lorda then fit each SRR to the simulated data.  
 
 #### Original Ricker  
 $$ R = \alpha Se^{-\beta S} $$  
-where $\alpha$ is the slope near the origin and $\beta$ is the density dependent parameter. There is no term for density dependence in this equation, but we will use it to compare. The Ricker SRR is also popular because it can be transformed to be linear:  
+where $\alpha$ is the slope near the origin and $\beta$ is the density dependent parameter. There is no term for density dependence in this equation, but we will use it to compare. The Ricker SRR is also popular because it can be made linear:  
 $$ log(R/S) = \alpha - \beta S $$  
 
 #### Quinn & Deriso's 4 parameter depensatory Ricker SRR  
@@ -32,27 +30,34 @@ $$ R = \alpha Se^{\beta S - \delta S^{\gamma }} $$
 The authors say that this model is depensatory when $S^{\gamma -1} < \beta / (\gamma \delta)$, which isn't very intuitive, which brings us to the next model.    
 
 #### Salia-Lorda SRR  
-$$ R_{t} = k(\frac{S_{t}}{S_{k}})^{C}e^{C (1-S_{t}/S_{k})} $$
+$$ R_{t} = k(\frac{S_{t}}{S_{k}})^{c}e^{c (1-S_{t}/S_{k})} $$
 where $R_{t}$ and $S_{t}$ are vectors of recruits and spawners at time *t*, *k* is the maximum number of recruits produced when $S_{t} = S_{k}$ and $S_{k}$ is is the spawning stock at which the number of recruits is *k*. *c* is the depensatory parameter; *c* = 1 produces the classic Ricker, *c* > 1 shows depensatory dynamics, and *c* < 1 shows hypercompensaiton.  
 
 ## Simulation  
-We'll simulate some data to play with. FEEL FREE to toggle the parameters (i.e. S, Sk, k, c, sigma), they will cascade through the robust code  
+We'll simulate some data from a Salia-Lorda to play with. FEEL FREE to toggle the parameters (i.e. S, Sk, k, c, sigma), they will cascade through the robust code  
 
-```{r, write fun}
+```{r declare parms, echo = TRUE}
+S <- runif(100, 10, 1000) #vector of random spawners
+Sk <- 600 
+k <- 200
+c <- 3
+sigma <- rnorm(length(S), 0, 50) #random white noise error
+```
+
+```{r write fun plot sim}
 sal_lor <- function(S, Sk, k, c, sigma){
-  exp_rec <- ((k*(S/Sk)^c)*exp(c*(1-S/Sk))+sigma)
+  exp_rec <- ((k*(S/Sk)^c)*exp(c*(1-S/Sk))) + sigma
   return(exp_rec)
 }
   
-S <- runif(100, 10, 1000)
-Sk <- 600
-k <- 200
-c <- 3
-sigma <- rnorm(length(S), 0, 10)
-
 exp_rec <- sal_lor(S, Sk, k, c, sigma)
 
+#dump pairs where exp_rec<0 - is this biasing the sim
+S <- S[exp_rec>0] 
+exp_rec <- exp_rec[exp_rec>0]
+
 plot(S, exp_rec)
+mtext("Simulated spawner-recruit relationship", adj=0)
 
 sim_stock <- data.frame(stock = S, recruits = exp_rec)
 ```  
@@ -67,7 +72,7 @@ summary(rick_fit)$coefficients
 ```
 
 now we can use optim to fit a non linear Quinn & Deriso model  
-```{r, QD fit}
+```{r, QD fit, warning = FALSE}
 QDLogLike <- function(parms){
   alpha <- parms[1]
   beta <- parms[2]
@@ -75,7 +80,7 @@ QDLogLike <- function(parms){
   gamma <- parms[4]
   sd <- exp(parms[5])
   
-  predicted <- alpha*sim_stock$stock*exp((beta*sim_stock$stock)-(delta*sim_stock$stock^gamma))
+  predicted <- alpha*sim_stock$stock*exp(((beta*sim_stock$stock)-(delta*sim_stock$stock))^gamma) #CHECK
   
   NegLogLike <- -sum(log(dnorm(sim_stock$recruits, predicted, sd= sd)))
   return(NegLogLike)
@@ -92,10 +97,10 @@ parms <- list(alpha, beta, delta, gamma, sd)
 
 QD_fit <- optim(parms, QDLogLike, method="Nelder-Mead", hessian=TRUE)
 
-QD_fit$par
+kable(cbind(c("Sk", "k", "c", "sd"), round(QD_fit$par, 2)))
 ```
 
-Now we'll refit the Salia-Lorda  
+Now we'll refit the Salia-Lorda  and plot the results
 ```{r, sal-lor fit}
 SLLogLike <- function(parms){
   Sk <- parms[1]
@@ -111,7 +116,7 @@ SLLogLike <- function(parms){
 parms <- list(Sk, k, c, sd) #can recycle from above
 
 SL_fit <- optim(parms, SLLogLike, method="Nelder-Mead", hessian=TRUE)
-cbind(c("SK", "k", "c", "sd"), SL_fit$par)
+kable(cbind(c("Sk", "k", "c", "sd"), round(SL_fit$par, 2)))
 ```
 
 Now we'll generate model predictions from the parameter fits   

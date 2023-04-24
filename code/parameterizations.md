@@ -9,7 +9,7 @@ parameterizaitons for both Ricker and Beverton-Holt type spawner recruit
 relationships (SRRs) but we will focus on some basics. Most of these
 derivations arise from a need for how to treat the depensatory
 parameter, with some having a goal of making the depensatory parameter
-“biologically relevant”.
+biologically relevant.
 
 ## Ricker based SRRs
 
@@ -71,35 +71,43 @@ sigma <- rnorm(length(S), 0, 50) #random white noise error
 
 Can fit a Ricker here the “old fashioned” way by making it linear.
 
-    ##                  Estimate  Std. Error   t value     Pr(>|t|)
-    ## (Intercept) -1.1899670783 0.192732992 -6.174174 1.997291e-08
-    ## stock       -0.0005986825 0.000288357 -2.076185 4.079403e-02
+    ##                 Estimate   Std. Error   t value     Pr(>|t|)
+    ## (Intercept) -0.492495722 0.1045571842 -4.710300 9.058274e-06
+    ## spawners    -0.001349195 0.0001626803 -8.293539 1.082784e-12
 
 now we can use optim to fit a non linear Quinn & Deriso model  
 <table>
 <tbody>
 <tr>
 <td style="text-align:left;">
-Sk
+alpha
 </td>
 <td style="text-align:left;">
--0.42
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-k
-</td>
-<td style="text-align:left;">
--0.47
+0.6111
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-c
+beta
 </td>
 <td style="text-align:left;">
-0.08
+-0.0013
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+delta
+</td>
+<td style="text-align:left;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+gamma
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -107,15 +115,7 @@ c
 sd
 </td>
 <td style="text-align:left;">
-0.84
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sk
-</td>
-<td style="text-align:left;">
-5.05
+2.3026
 </td>
 </tr>
 </tbody>
@@ -128,7 +128,7 @@ Now we’ll refit the Salia-Lorda and plot the results
 Sk
 </td>
 <td style="text-align:left;">
-563.01
+617.97
 </td>
 </tr>
 <tr>
@@ -136,7 +136,7 @@ Sk
 k
 </td>
 <td style="text-align:left;">
-198.41
+190.13
 </td>
 </tr>
 <tr>
@@ -144,7 +144,7 @@ k
 c
 </td>
 <td style="text-align:left;">
-2.87
+2.04
 </td>
 </tr>
 <tr>
@@ -152,7 +152,7 @@ c
 sd
 </td>
 <td style="text-align:left;">
-3.82
+3.93
 </td>
 </tr>
 </tbody>
@@ -163,14 +163,7 @@ Now we’ll generate model predictions from the parameter fits
 Then plot it
 ![](parameterizations_files/figure-gfm/plot%20fits-1.png)<!-- -->
 
-## To-do
-
-- Clip the negative recruits out of the simulation!  
-- Fix the 4 parameter Ricker from Quinn & Deriso so it actually fits!  
-- Play around with different solvers (e.g. `nlme()`?) because `optim()`
-  is very sensitive to starting parameters in these models
-
-we could add variations of the Beverton-Holt, which are generally easier
+We could add variations of the Beverton-Holt, which are generally easier
 to fit. These could include:  
 - classic Beverton-Holt without depensation  
 - Myers’ Beverton-Holt from the ’95

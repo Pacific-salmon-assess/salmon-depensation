@@ -160,6 +160,8 @@ lines(fit~S, data = SL_preds, col = "green")
 lines(fit~S, data = QD_preds, col = "red") #Something's messed up with the QD model!
 ```
 
+**NOTE** that the Quinn & Deriso SR model (red) is currently BROKEN!  
+
 We could add variations of the Beverton-Holt, which are generally easier to fit. These could include:  
 - classic Beverton-Holt without depensation  
 - Myers' Beverton-Holt from the '95 [paper](https://www.science.org/doi/10.1126/science.269.5227.1106) in *Science*  

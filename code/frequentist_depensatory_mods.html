@@ -1539,7 +1539,7 @@ for(i in unique(SR_data_filter$species_stock)){
 
     shepard_results &lt;- rbind(data.frame(i, unique(sub_stock$species), unique(sub_stock$stock),
                                         fit3$par[1], exp(fit3$par[2]), fit3$par[3], 
-                                        exp(fit3$par[4])),
+                                        exp(fit3$par[4]), unique(sub_stock$stock.id)),
                              shepard_results)
 }</code></pre>
 <p>And then clean up the table</p>

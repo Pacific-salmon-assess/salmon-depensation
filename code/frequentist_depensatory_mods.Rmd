@@ -20,8 +20,11 @@ library(here)
 
 ```{r, data}
 SR_data <- read.csv(here("data/salmon_productivity_compilation_jun2022.csv")) %>%
-  select(-X, -stock.id) %>%
+  select(-X) %>%
   mutate(species_stock = paste(species, stock)) #to help with looping later
+
+stock_info <- read.csv(here('data','all_stocks_info_jun2022.csv'))
+
 ```
 
 # Fit Shepard models to all populaitons  
@@ -75,14 +78,14 @@ for(i in unique(SR_data_filter$species_stock)){
 
     shepard_results <- rbind(data.frame(i, unique(sub_stock$species), unique(sub_stock$stock),
                                         fit3$par[1], exp(fit3$par[2]), fit3$par[3], 
-                                        exp(fit3$par[4])),
+                                        exp(fit3$par[4]), unique(sub_stock$stock.id)),
                              shepard_results)
 }
 ```
 
 And then clean up the table  
 ```{r, shepard table clean}
-colnames(shepard_results) <- c("species_stock", "species", "stock", "alpha", "beta", "delta", "sd")
+colnames(shepard_results) <- c("species_stock", "species", "stock", "alpha", "beta", "delta", "sd", "stock.id")
 
 shepard_results <- shepard_results %>% 
   mutate_at(4:7,funs(round(., 2)))
@@ -127,4 +130,10 @@ ggplot(good_fits, aes(delta)) +
   facet_wrap(~species) +
   geom_vline(xintercept=1, lty =2) +
   labs(title = "Histogram of delta parameter estimates form a depensatory beverton-holt")
+```
+
+```{r check sockeye, include = FALSE}
+SK <- filter(shepard_results, species=="Sockeye")
+data <- left_join(good_fits, stock_info, by = "stock.id") #UGH why u broken!?
+
 ```

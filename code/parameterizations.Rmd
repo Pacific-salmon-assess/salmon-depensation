@@ -1,7 +1,13 @@
 ---
 title: "Various spawner recruit relationships for depensatory dynamics"
-output: 
-  rmarkdown::github_document
+output:
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    smooth_scroll: yes
+    theme: cerulean
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -146,7 +152,7 @@ SL_preds <- data.frame(fit = SL_preds, S = S) %>%
   arrange(S)
 ```
 
-Then plot it
+Then plot it  
 ```{r, plot fits}
 plot(S, exp_rec)
 lines(fit~S, data = rick_preds, col = "blue")

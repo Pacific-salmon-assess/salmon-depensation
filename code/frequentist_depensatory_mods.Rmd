@@ -1,29 +1,33 @@
 ---
 title: "Simple depensatory models to all stocks"
-output: rmarkdown::github_document
+output:
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    smooth_scroll: yes
+    theme: cerulean
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
-```{r, load pkgs}
 library(tidyverse)
 library(ggh4x) #for some nicer facetting
 library(here)
 ```
 
-#### Read in data 
 ```{r, data}
 SR_data <- read.csv(here("data/salmon_productivity_compilation_jun2022.csv")) %>%
   select(-X, -stock.id) %>%
   mutate(species_stock = paste(species, stock)) #to help with looping later
 ```
 
-## Fit Shepard models to all populaitons  
+# Fit Shepard models to all populaitons  
 Need to get rid of some populations that won't fit.  
 I think these aren't fitting because of high recruitment variability, which makes my simple init for the beta parm (i.e. `max(sub_stock$spawners)/1.5`) break the model.  
-```{r, dump pops}
+```{r, dump pops, echo = TRUE}
 SR_data_filter <- filter(SR_data, !(species_stock %in% c("Chinook Andrew Creek", "Chinook Alsek/Klukshu",
                                                 "Chinook Alsek-Klukshu",
                                                 "Chinook East Fork South Fork Salmon River",
@@ -34,7 +38,7 @@ SR_data_filter <- filter(SR_data, !(species_stock %in% c("Chinook Andrew Creek",
 ```
 
 Then we can run the model  
-```{r, shepard}
+```{r, shepard, echo = TRUE}
 #build likliehood function
 getNegLogLike <- function(parms){
   alpha <- parms[1]
@@ -112,12 +116,15 @@ for(i in 1:pages){
 }
 ```
 
+## Plot delta
+
 then let's take a look at the delta estimates by species, for fits we trust  
-```{r, compare deltas}
+```{r, compare deltas, message = FALSE}
 good_fits <- filter(shepard_results, !(species_stock %in% bad_stocks))
 
 ggplot(good_fits, aes(delta)) +
   geom_histogram() +
   facet_wrap(~species) +
+  geom_vline(xintercept=1, lty =2) +
   labs(title = "Histogram of delta parameter estimates form a depensatory beverton-holt")
 ```

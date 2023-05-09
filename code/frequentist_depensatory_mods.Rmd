@@ -11,37 +11,39 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
 library(ggh4x) #for some nicer facetting
 library(here)
 ```
 
-```{r, data}
-SR_data <- read.csv(here("data/salmon_productivity_compilation_jun2022.csv")) %>%
-  select(-X) %>%
+```{r read data}
+SR_data <- read.csv(here("data/salmon_productivity_compilation_may2023.csv")) |>
+  select(-X) |>
   mutate(species_stock = paste(species, stock)) #to help with looping later
 
-stock_info <- read.csv(here('data','all_stocks_info_jun2022.csv'))
+stock_info <- read.csv(here('data','all_stocks_info_may2023.csv')) |>
+  select(-X, -source, -url)
 
 ```
 
 # Fit Shepard models to all populaitons  
 Need to get rid of some populations that won't fit.  
 I think these aren't fitting because of high recruitment variability, which makes my simple init for the beta parm (i.e. `max(sub_stock$spawners)/1.5`) break the model.  
-```{r, dump pops, echo = TRUE}
+```{r dump pops, echo = TRUE}
 SR_data_filter <- filter(SR_data, !(species_stock %in% c("Chinook Andrew Creek", "Chinook Alsek/Klukshu",
                                                 "Chinook Alsek-Klukshu",
                                                 "Chinook East Fork South Fork Salmon River",
                                                 "Chinook Entiat River", "Chinook Minam River",
-                                                "Chinook Coweeman River"))) %>%
+                                                "Chinook Coweeman River", 
+                                                "Sockeye Misc. Nahatlatch"))) |>
   mutate(spawners = ifelse(spawners==0|recruits==0, spawners+1, spawners),
          recruits = ifelse(spawners==0|recruits==0, recruits+1, recruits))
 ```
 
 Then we can run the model  
-```{r, shepard, echo = TRUE}
+```{r shepard, echo = TRUE}
 #build likliehood function
 getNegLogLike <- function(parms){
   alpha <- parms[1]
@@ -54,14 +56,14 @@ getNegLogLike <- function(parms){
   return(NegLogLike)
 }
 
-#declare parms all pops will share
+#declare start parms all pops will share
 alpha <- 1
 delta <- 1
 
 shepard_results <- NULL #empty df to populate with results
 
 for(i in unique(SR_data_filter$species_stock)){
-  sub_stock <- filter(SR_data_filter, species_stock == i) %>%
+  sub_stock <- filter(SR_data_filter, species_stock == i) |>
       na.omit()
     
     #declare stock specific parms for beta and sd based on some heuristics 
@@ -84,21 +86,23 @@ for(i in unique(SR_data_filter$species_stock)){
 ```
 
 And then clean up the table  
-```{r, shepard table clean}
+```{r shepard table clean}
 colnames(shepard_results) <- c("species_stock", "species", "stock", "alpha", "beta", "delta", "sd", "stock.id")
 
-shepard_results <- shepard_results %>% 
+shepard_results <- shepard_results |>
   mutate_at(4:7,funs(round(., 2)))
 ```
 
 Some of these `beta` parameters are tiny. They must have had a hard time fitting. Let's look at the data to try and get an idea of whats going on. We'll also include the pops that wouldn't fit that we filtered out earlier.    
-```{r, check bad stocks}
-bad_stocks <- c(filter(shepard_results, beta<1) %>% pull(species_stock), 
+```{r check bad stocks}
+bad_stocks <- c(filter(shepard_results, beta<1|delta>30) |> 
+                  pull(species_stock), 
                 "Chinook Andrew Creek", "Chinook Alsek/Klukshu",
                                                 "Chinook Alsek-Klukshu",
                                                 "Chinook East Fork South Fork Salmon River",
                                                 "Chinook Entiat River", "Chinook Minam River",
-                                                "Chinook Coweeman River")
+                                                "Chinook Coweeman River", 
+                                                "Sockeye Misc. Nahatlatch")
 
 
 bad_stocks_data <- filter(SR_data, species_stock %in% bad_stocks)
@@ -122,18 +126,28 @@ for(i in 1:pages){
 ## Plot delta
 
 then let's take a look at the delta estimates by species, for fits we trust  
-```{r, compare deltas, message = FALSE}
+```{r compare deltas}
 good_fits <- filter(shepard_results, !(species_stock %in% bad_stocks))
 
 ggplot(good_fits, aes(delta)) +
   geom_histogram() +
   facet_wrap(~species) +
   geom_vline(xintercept=1, lty =2) +
-  labs(title = "Histogram of delta parameter estimates form a depensatory beverton-holt")
+  labs(title = "Histogram of delta parameter estimates form a depensatory beverton-holt") +
+  theme_minimal()
 ```
 
-```{r check sockeye, include = FALSE}
-SK <- filter(shepard_results, species=="Sockeye")
-data <- left_join(good_fits, stock_info, by = "stock.id") #UGH why u broken!?
+```{r delta by basin}
+data <- left_join(good_fits, stock_info, by = c("stock.id", "species")) |>
+  select(-stock.name, -stock.id) |>
+  filter(!is.na(ocean.basin))
+
+ggplot(data, aes(delta, fill = ocean.basin)) +
+  geom_histogram(position = "stack") +
+  facet_wrap(~species) +
+  geom_vline(xintercept=1, lty =2) +
+  theme_minimal() +
+  scale_fill_viridis_d() +
+  labs(title = "Histogram of delta parameter estimates form a depensatory beverton-holt")
 
 ```

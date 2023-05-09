@@ -20,8 +20,7 @@ library(here)
 
 ```{r read data}
 SR_data <- read.csv(here("data/salmon_productivity_compilation_may2023.csv")) |>
-  select(-X) |>
-  mutate(species_stock = paste(species, stock)) #to help with looping later
+  select(-X)
 
 stock_info <- read.csv(here('data','all_stocks_info_may2023.csv')) |>
   select(-X, -source, -url)
@@ -32,12 +31,12 @@ stock_info <- read.csv(here('data','all_stocks_info_may2023.csv')) |>
 Need to get rid of some populations that won't fit.  
 I think these aren't fitting because of high recruitment variability, which makes my simple init for the beta parm (i.e. `max(sub_stock$spawners)/1.5`) break the model.  
 ```{r dump pops, echo = TRUE}
-SR_data_filter <- filter(SR_data, !(species_stock %in% c("Chinook Andrew Creek", "Chinook Alsek/Klukshu",
-                                                "Chinook Alsek-Klukshu",
-                                                "Chinook East Fork South Fork Salmon River",
-                                                "Chinook Entiat River", "Chinook Minam River",
-                                                "Chinook Coweeman River", 
-                                                "Sockeye Misc. Nahatlatch"))) |>
+SR_data_filter <- filter(SR_data, !(stock %in% c("Andrew Creek-Chinook", "Alsek/Klukshu-Chinook",
+                                                "Alsek-Klukshu-Chinook",
+                                                "East Fork South Fork Salmon River-Chinook",
+                                                "Entiat River-Chinook", "Minam River-Chinook",
+                                                "Coweeman River-Chinook", 
+                                                "Misc. Nahatlatch-Sockeye"))) |>
   mutate(spawners = ifelse(spawners==0|recruits==0, spawners+1, spawners),
          recruits = ifelse(spawners==0|recruits==0, recruits+1, recruits))
 ```
@@ -62,8 +61,8 @@ delta <- 1
 
 shepard_results <- NULL #empty df to populate with results
 
-for(i in unique(SR_data_filter$species_stock)){
-  sub_stock <- filter(SR_data_filter, species_stock == i) |>
+for(i in unique(SR_data_filter$stock)){
+  sub_stock <- filter(SR_data_filter, stock == i) |>
       na.omit()
     
     #declare stock specific parms for beta and sd based on some heuristics 
@@ -78,7 +77,7 @@ for(i in unique(SR_data_filter$species_stock)){
     fit3 <- optim(fit2$par, getNegLogLike, method="Nelder-Mead", hessian=TRUE)
     
 
-    shepard_results <- rbind(data.frame(i, unique(sub_stock$species), unique(sub_stock$stock),
+    shepard_results <- rbind(data.frame(i, unique(sub_stock$species),
                                         fit3$par[1], exp(fit3$par[2]), fit3$par[3], 
                                         exp(fit3$par[4]), unique(sub_stock$stock.id)),
                              shepard_results)
@@ -87,7 +86,7 @@ for(i in unique(SR_data_filter$species_stock)){
 
 And then clean up the table  
 ```{r shepard table clean}
-colnames(shepard_results) <- c("species_stock", "species", "stock", "alpha", "beta", "delta", "sd", "stock.id")
+colnames(shepard_results) <- c("species_stock", "species", "alpha", "beta", "delta", "sd", "stock.id")
 
 shepard_results <- shepard_results |>
   mutate_at(4:7,funs(round(., 2)))
@@ -97,26 +96,26 @@ Some of these `beta` parameters are tiny. They must have had a hard time fitting
 ```{r check bad stocks}
 bad_stocks <- c(filter(shepard_results, beta<1|delta>30) |> 
                   pull(species_stock), 
-                "Chinook Andrew Creek", "Chinook Alsek/Klukshu",
-                                                "Chinook Alsek-Klukshu",
-                                                "Chinook East Fork South Fork Salmon River",
-                                                "Chinook Entiat River", "Chinook Minam River",
-                                                "Chinook Coweeman River", 
-                                                "Sockeye Misc. Nahatlatch")
+                "Andrew Creek-Chinook", "Alsek/Klukshu-Chinook",
+                                                "Alsek-Klukshu-Chinook",
+                                                "East Fork South Fork Salmon River-Chinook",
+                                                "Entiat River-Chinook", "Minam River-Chinook",
+                                                "Coweeman River-Chinook", 
+                                                "Misc. Nahatlatch-Sockeye")
 
 
-bad_stocks_data <- filter(SR_data, species_stock %in% bad_stocks)
+bad_stocks_data <- filter(SR_data, stock %in% bad_stocks)
 
 max_facets <- 16
 
 pages <- ceiling(length(bad_stocks)/max_facets)
 
 for(i in 1:pages){
-  sub_data <- filter(bad_stocks_data, species_stock %in% 
-                               unique(bad_stocks_data$species_stock)[(((i-1)*max_facets)+1):(max_facets*i)])
+  sub_data <- filter(bad_stocks_data, stock %in% 
+                               unique(bad_stocks_data$stock)[(((i-1)*max_facets)+1):(max_facets*i)])
   p <- ggplot(sub_data, aes(spawners, recruits)) +
     geom_point() +
-        ggh4x::facet_wrap2(vars(species_stock), nrow=4, ncol=4, trim_blank=FALSE, 
+        ggh4x::facet_wrap2(vars(stock), nrow=4, ncol=4, trim_blank=FALSE, 
                            scales="free")+
     labs(title = paste("Bad stocks", i, "of", pages))
   print(p)

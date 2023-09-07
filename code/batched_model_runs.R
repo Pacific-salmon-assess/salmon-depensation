@@ -1,22 +1,18 @@
 #Batched model for all salmon stocks
-library(here)
-library(dplyr)
-library(rstan)
-library(loo)
-library(dlm)
+library(here);library(dplyr)
+stock_dat<- read.csv(here('data','salmon_productivity_compilation_may2023.csv'))
+stock_info<- read.csv(here('data','all_stocks_info_may2023.csv'))
+library(rstan);library(loo);library(dlm)
+
 source(here('code','functions.R'))
 
-stock_dat <- read.csv(here('data','salmon_productivity_compilation_jun2022.csv'))
-stock_info <- read.csv(here('data','all_stocks_info_jun2022.csv'))
-
 ##steps:
-#fits Saila-Lorda (modified Ricker model) to 244 P. salmon stocks
+#fits saila-lorde (modified Ricker model) to 244 P. salmon stocks
 #plot S-R fits from model, overview of 'c' depensation parameter (c > 1 = depensation)
 
-stock_d <- distinct(stock_dat,stock.id,.keep_all = T)
-stock_name <- paste(stock_d$stock,stock_d$species,sep='-')
-depensation_summary <- data.frame(stock=stock_name,sp=stock_d$species,c_median=NA,c.l90=NA,c.u90=NA,c.l95=NA,c.u95=NA,Sk=NA,Sk.l90=NA,Sk.u90=NA)
-
+stock_d=distinct(stock_dat,stock.id,.keep_all = T)
+stock_name=paste(stock_d$stock,stock_d$species,sep='-')
+depensation_summary=data.frame(stock=stock_name,sp=stock_d$species,c_median=NA,c.l90=NA,c.u90=NA,c.l95=NA,c.u95=NA,Sk=NA,Sk.l90=NA,Sk.u90=NA)
 for(i in 1:length(stock_name)){
   stock1<- subset(stock_dat,stock.id==unique(stock.id)[i])
   if(any(stock1$spawners==0)||any(stock1$recruits==0)){
@@ -146,5 +142,24 @@ sl_test=rstan::stan(file = here('code','Perala depensation stan models','sl_unif
                               cLow=0,
                               cUp=5),
                     pars=c('k','Sk','sigma2','c','mu'), control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+
+
+###Testing HMM framework
+ale_hmm=rstan::stan_model(file=here('code','HMM','allee_hmm.stan'))
+
+
+stock1<- subset(stock_dat,stock.id==unique(stock.id)[1])
+stock1$logRS=log(stock1$recruits/stock1$spawners)
+
+ahm_test=rstan::stan(here('code','HMM','allee_hmm.stan'), 
+                    data=list(N=nrow(stock1),
+                              R_S=stock1$logRS,
+                              S=stock1$spawners,
+                              K=2,
+                              pSmax_mean=max(stock1$spawners)*0.5,
+                              pSmax_sig=max(stock1$spawners)*0.5
+                    ),
+                    control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
+
 
 

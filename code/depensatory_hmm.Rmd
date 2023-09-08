@@ -78,11 +78,16 @@ for(i in unique(SR_data_filter$stock)){
 colnames(depensation_summary) <- c("species", "stock", "log_a_med", "log_a_LCI", "log_a_UCI",
                                    "gamma_med", "gamma_LCI", "gamma_UCI",
                                    "w_med", "w_LCI", "w_UCI", "min_ESS", "min_Rhat")
+
+write.csv(depensation_summary, here("outputs/hmm_summary.csv"))
 ```
 
 # plot it
 
 ```{r plot parms}
+depensation_summary <- arrange(depensation_summary, species)
 ggplot(depensation_summary) +
-  geom_pointrange(aes())
+  geom_pointrange(aes(x = stock, y = w_med, ymin = w_LCI, ymax = w_UCI, 
+                      color = species)) 
+  
 ```

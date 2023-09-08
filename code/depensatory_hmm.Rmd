@@ -1,0 +1,93 @@
+---
+title: "Exploring depensatory hidden markov models"
+output:
+  html_document:
+    collapsed: no
+    fig_caption: yes
+    smooth_scroll: yes
+    theme: cerulean
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(ggh4x) #for nicer facetting
+library(here)
+```
+
+```{r read and filter data}
+SR_data <- read.csv(here("data/salmon_productivity_compilation_may2023.csv")) |>
+  select(-X)
+
+stock_info <- read.csv(here('data','all_stocks_info_may2023.csv')) |>
+  select(-X, -source, -url)
+
+SR_data_filter <- filter(SR_data, !(stock %in% c("Andrew Creek-Chinook", "Alsek/Klukshu-Chinook",
+                                                "Alsek-Klukshu-Chinook",
+                                                "East Fork South Fork Salmon River-Chinook",
+                                                "Entiat River-Chinook", "Minam River-Chinook",
+                                                "Coweeman River-Chinook", 
+                                                "Misc. Nahatlatch-Sockeye"))) |>
+  mutate(spawners = ifelse(spawners==0|recruits==0, spawners+1, spawners),
+         recruits = ifelse(spawners==0|recruits==0, recruits+1, recruits)) |> #*why write both?
+         mutate(logRS = log(recruits/spawners))
+```
+
+```{r fit data}
+depensation_summary <- data.frame(NULL)
+
+#SR_data_filter <- filter(SR_data_filter, stock %in% unique(SR_data_filter$stock)[1:2])
+for(i in unique(SR_data_filter$stock)){ 
+  sub_stock <- filter(SR_data_filter, stock == i) |>
+      na.omit()
+  
+ hmm.fit <- rstan::stan(file = here("code/HMM/allee_hmm.stan"),  
+                      data=list(N=nrow(sub_stock),
+                              R_S=sub_stock$logRS,
+                              S=sub_stock$spawners,
+                              K=2,
+                              pSmax_mean=max(sub_stock$spawners)*0.5,
+                              pSmax_sig=max(sub_stock$spawners)*0.5), 
+                      control = list(adapt_delta = 0.95,max_treedepth = 15), 
+                      warmup = 200, 
+                      chains = 4, 
+                      iter = 800, 
+                      thin = 1)
+  
+  params <- rstan::extract(hmm.fit)
+  fit_summary <- as.data.frame(rstan::summary(hmm.fit)$summary)
+
+  depensation_summary <- bind_rows(depensation_summary, 
+                                   data.frame(unique(sub_stock$species),
+                                              unique(sub_stock$stock),
+                                              median(params$log_a),
+                                              quantile(params$log_a,0.05),
+                                              quantile(params$log_a,0.95),
+                                              median(params$gamma),
+                                              quantile(params$gamma,0.05),
+                                              quantile(params$gamma,0.95),
+                                              median(params$w),
+                                              quantile(params$w,0.05),
+                                              quantile(params$w,0.95),
+                                              max(fit_summary$Rhat, na.rm = TRUE),
+                                              min(fit_summary$ESS)))
+}
+
+colnames(depensation_summary) <- c("species", "stock", "log_a_med", "log_a_LCI", "log_a_UCI",
+                                   "gamma_med", "gamma_LCI", "gamma_UCI",
+                                   "w_med", "w_LCI", "w_UCI", "min_ESS", "min_Rhat")
+
+write.csv(depensation_summary, here("outputs/hmm_summary.csv"))
+```
+
+# plot it
+
+```{r plot parms}
+depensation_summary <- arrange(depensation_summary, species)
+ggplot(depensation_summary) +
+  geom_pointrange(aes(x = stock, y = w_med, ymin = w_LCI, ymax = w_UCI, 
+                      color = species)) 
+  
+```

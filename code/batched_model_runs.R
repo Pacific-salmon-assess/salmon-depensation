@@ -148,18 +148,61 @@ sl_test=rstan::stan(file = here('code','Perala depensation stan models','sl_unif
 ale_hmm=rstan::stan_model(file=here('code','HMM','allee_hmm.stan'))
 
 
-stock1<- subset(stock_dat,stock.id==unique(stock.id)[1])
-stock1$logRS=log(stock1$recruits/stock1$spawners)
+df<- subset(stock_dat,stock.id==unique(stock.id)[1])
+df$logRS=log(df$recruits/df$spawners)
+df$S=df$spawners
+df$R=df$recruits
 
 ahm_test=rstan::stan(here('code','HMM','allee_hmm.stan'), 
-                    data=list(N=nrow(stock1),
-                              R_S=stock1$logRS,
-                              S=stock1$spawners,
+                    data=list(N=nrow(df),
+                              R_S=df$logRS,
+                              S=df$spawners,
                               K=2,
-                              pSmax_mean=max(stock1$spawners)*0.5,
-                              pSmax_sig=max(stock1$spawners)*0.5
+                              pSmax_mean=max(df$spawners)*0.5,
+                              pSmax_sig=max(df$spawners)*0.5
                     ),
                     control = list(adapt_delta = 0.95,max_treedepth = 15), warmup = 200, chains = 4, iter = 800, thin = 1)
 
+x_new=seq(min(df$spawners),max(df$spawners),length.out=200)
+pred_df=data.frame(x_new)
 
+post=rstan::extract(ahm_test)
+pred_df[,2]=exp(median(post$log_a[,1])-median(post$b)*x_new)*x_new
+pred_df[,3]=exp(median(post$log_a[,2])-median(post$b)*x_new)*x_new
+df$gamma=apply(post$gamma[,,2],2,median)
+gamma_df=data.frame(by=df$broodyear,gamma=apply(post$gamma[,,2],2,median),gamma_l90=apply(post$gamma[,,2],2,quantile,0.1),gamma_u90=apply(post$gamma[,,2],2,quantile,0.9))
 
+plot2=ggplot2::ggplot(gamma_df, aes(by,gamma)) +
+  ylim(0,1)+
+  geom_hline(yintercept=0.5,linetype='dashed')+
+  geom_line(aes(x=by,y=gamma),linewidth=1.3)+
+  geom_point(aes(colour = gamma),size=4) +
+  scale_colour_viridis_c(name='p')+
+  geom_ribbon(aes(ymin =gamma_l90, ymax =gamma_u90), alpha = 0.2)+
+  xlab("Year") + 
+  ylab("Prob. of high prod. regime")+
+  theme_classic(14)+
+  theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
+        strip.text = element_text(face="bold", size=12),
+        axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+
+plot1=ggplot2::ggplot(df, aes(S, R)) +
+  geom_line(data=pred_df,aes(x=x_new,y=pred_df[,2],colour = min(gamma_df$gamma)),linewidth=1.3)+
+  geom_line(data=pred_df,aes(x=x_new,y=pred_df[,3],colour = max(gamma_df$gamma)),linewidth=1.3)+
+  geom_point(aes(colour = gamma_df$gamma),size=2.5) +
+  scale_colour_viridis_c(name='p')+
+  xlab("Spawners") + 
+  ylab("Recruits")+
+  theme_classic(14)+
+  xlim(0, max(df$S))+
+  ylim(0, max(df$R))+
+  theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
+        strip.text = element_text(face="bold", size=12),
+        axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+
+legend = cowplot::get_legend(plot1)
+
+plot_hmm_a=cowplot::plot_grid(plot1 + theme(legend.position="none"),
+                              plot2 + theme(legend.position="none"),
+                              ncol=2,nrow=1,labels=c("A","B"))
+plot=cowplot::plot_grid(plot_hmm_a,legend,rel_widths = c(3,.3))

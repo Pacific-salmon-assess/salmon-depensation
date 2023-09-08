@@ -27,8 +27,8 @@ parameters {
   // A[i][j] = p(z_t = j | z_{t-1} = i)
   // Continuous observation model
   ordered[K] log_a; // max. productivity
-  real log_b; // rate capacity - fixed in this
-  real<lower=0> sigma; // observation standard deviations
+  vector[K] log_b; // rate capacity - fixed in this
+  vector<lower=0>[K] sigma; // observation standard deviations
 }
 transformed parameters {
   vector[K] unA[N];
@@ -50,7 +50,7 @@ A[t] = softmax(unA[t]);
 { // Forward algorithm log p(z_t = j | y_{1:t})
   real accumulator1[K];
 
-  for(j in 1:K)logalpha[1,j] = log(pi1[j]) + normal_lpdf(R_S[1] |log_a[j] - b*S[1], sigma);
+  for(j in 1:K)logalpha[1,j] = log(pi1[j]) + normal_lpdf(R_S[1] |log_a[j] - b[j]*S[1], sigma[j]);
   
 
   for (t in 2:N) {
@@ -58,7 +58,7 @@ A[t] = softmax(unA[t]);
   for (i in 1:K) { // i = previous (t-1)
   // Murphy (2012) p. 609 eq. 17.48
   // belief state + transition prob + local evidence at t
-  accumulator1[i] = logalpha[t-1, i] + log(A[t][i]) + normal_lpdf(R_S[t] |log_a[j] - b*S[t], sigma);
+  accumulator1[i] = logalpha[t-1, i] + log(A[t][i]) + normal_lpdf(R_S[t] |log_a[j] - b[j]*S[t], sigma[j]);
   }
   logalpha[t, j] = log_sum_exp(accumulator1);
   }
@@ -106,7 +106,7 @@ generated quantities {
   for (i in 1:K) { // i = next (t)
   // Murphy (2012) Eq. 17.58
   // backwards t + transition prob + local evidence at t
-  accumulator2[i] = logbeta[t, i] + log(A[t][i]) + normal_lpdf(R_S[t] | log_a[i] - b*S[t], sigma);
+  accumulator2[i] = logbeta[t, i] + log(A[t][i]) + normal_lpdf(R_S[t] | log_a[i] - b[i]*S[t], sigma[j]);
   }
   logbeta[t-1, j] = log_sum_exp(accumulator2);
   }
@@ -134,7 +134,7 @@ generated quantities {
       delta[t, j] = negative_infinity();
       for (i in 1:K) { // i = previous (t-1)
         real logp;
-        logp = delta[t-1, i] + log(A[t][i]) + normal_lpdf(R_S[t] | log_a[j] - b*S[t], sigma);
+        logp = delta[t-1, i] + log(A[t][i]) + normal_lpdf(R_S[t] | log_a[j] - b[j]*S[t], sigma[j]);
         if (logp > delta[t, j]) {
           bpointer[t, j] = i;
           delta[t, j] = logp;

@@ -24,10 +24,12 @@ SR_data <- read.csv(here("data/salmon_productivity_compilation_may2023.csv")) |>
 stock_info <- read.csv(here('data','all_stocks_info_may2023.csv')) |>
   select(-X, -source, -url)
 
-SR_data_filter <- filter(SR_data, !(stock %in% c("Andrew Creek-Chinook", "Alsek/Klukshu-Chinook",
+SR_data_filter <- filter(SR_data, !(stock %in% c("Andrew Creek-Chinook", 
+                                                 "Alsek/Klukshu-Chinook",
                                                 "Alsek-Klukshu-Chinook",
                                                 "East Fork South Fork Salmon River-Chinook",
-                                                "Entiat River-Chinook", "Minam River-Chinook",
+                                                "Entiat River-Chinook", 
+                                                "Minam River-Chinook",
                                                 "Coweeman River-Chinook", 
                                                 "Misc. Nahatlatch-Sockeye"))) |>
   mutate(spawners = ifelse(spawners==0|recruits==0, spawners+1, spawners),
@@ -36,7 +38,10 @@ SR_data_filter <- filter(SR_data, !(stock %in% c("Andrew Creek-Chinook", "Alsek/
 ```
 
 ```{r fit data}
-depensation_summary <- data.frame(NULL)
+refit <- TRUE #toggle if you want
+
+if(!("hmm_summary.csv"%in%list.files(here("outputs"))) | refit == TRUE){
+  depensation_summary <- data.frame(NULL)
 
 #SR_data_filter <- filter(SR_data_filter, stock %in% unique(SR_data_filter$stock)[1:2])
 for(i in unique(SR_data_filter$stock)){ 
@@ -60,34 +65,42 @@ for(i in unique(SR_data_filter$stock)){
   fit_summary <- as.data.frame(rstan::summary(hmm.fit)$summary)
 
   depensation_summary <- bind_rows(depensation_summary, 
-                                   data.frame(unique(sub_stock$species),
-                                              unique(sub_stock$stock),
-                                              median(params$log_a),
-                                              quantile(params$log_a,0.05),
-                                              quantile(params$log_a,0.95),
-                                              median(params$gamma),
-                                              quantile(params$gamma,0.05),
-                                              quantile(params$gamma,0.95),
-                                              median(params$w),
-                                              quantile(params$w,0.05),
-                                              quantile(params$w,0.95),
-                                              max(fit_summary$Rhat, na.rm = TRUE),
-                                              min(fit_summary$ESS)))
+                                   data.frame(species = unique(sub_stock$species),
+                                              stock = unique(sub_stock$stock),
+                                              log_a_med = median(params$log_a),
+                                              log_a_Q1 = quantile(params$log_a,0.25),
+                                              log_a_Q3 = quantile(params$log_a,0.75),
+                                              gamma_med = median(params$gamma),
+                                              gamma_Q1 = quantile(params$gamma,0.25),
+                                              gamma_Q3 = quantile(params$gamma,0.75),
+                                              w_med = median(params$w),
+                                              w_Q1 = quantile(params$w,0.25),
+                                              w_Q3 = quantile(params$w,0.75),
+                                              max_Rhat = max(fit_summary$Rhat, na.rm = TRUE),
+                                              mis_ess = min(fit_summary$ESS)))
+}
+  
+write.csv(depensation_summary, here("outputs/hmm_summary.csv"))
+} else{
+  depensation_summary <- read.csv(here("outputs/hmm_summary.csv"))
 }
 
-colnames(depensation_summary) <- c("species", "stock", "log_a_med", "log_a_LCI", "log_a_UCI",
-                                   "gamma_med", "gamma_LCI", "gamma_UCI",
-                                   "w_med", "w_LCI", "w_UCI", "min_ESS", "min_Rhat")
 
-write.csv(depensation_summary, here("outputs/hmm_summary.csv"))
 ```
 
 # plot it
 
 ```{r plot parms}
-depensation_summary <- arrange(depensation_summary, species)
+depensation_summary <- arrange(depensation_summary, species, stock) |>
+  mutate(species = as.factor(species),
+         stock = as.factor(stock), 
+         pop = as.factor(row_number()))
+
 ggplot(depensation_summary) +
-  geom_pointrange(aes(x = stock, y = w_med, ymin = w_LCI, ymax = w_UCI, 
-                      color = species)) 
+  geom_pointrange(aes(x = pop, y = w_med, ymin = w_LCI, ymax = w_UCI, 
+                      color = species)) +
+  theme_minimal() +
+  labs(x = "population", y= "w parameter quantiles") +
+  theme(axis.text.x = element_blank())
   
 ```
